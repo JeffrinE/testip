@@ -46,7 +46,7 @@ def index():
 
     context_data = f"ID: {str(id)}, IP: {ip}, Timestamp: {timestamp}, UserAgent: {user_agent}, Info: {ip_info}"
     print(context_data)    
-    logging.INFO(context_data)
+    logging.info(context_data)
     return render_template('index.html', ID=str(id), IP=ip)
 
 @app.route('/<id>')
@@ -67,7 +67,7 @@ def tracking_pixel_id(id):
     context_data = f"ID: {str(id)}, IP: {ip}, Timestamp: {timestamp}, UserAgent: {user_agent}, Info: {ip_info}"
 
     print(context_data)
-    logging.INFO(context_data)
+    logging.info(context_data)
     return render_template('index.html', ID=str(id), IP=ip)
 
 
