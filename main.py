@@ -4,8 +4,10 @@ import datetime
 import requests
 from pathlib import Path
 import ujson
+import logging
 
 app = Flask(__name__)
+
 
 parent_directory = Path.cwd().parent
 
@@ -42,8 +44,10 @@ def index():
         "Info": ip_info
     }
 
-    print(f"ID: {str(id)}, IP: {ip}, Timestamp: {timestamp}, UserAgent: {user_agent}, Info: {ip_info}")
-    return render_template('index.html', ID=id, IP=ip)
+    context_data = f"ID: {str(id)}, IP: {ip}, Timestamp: {timestamp}, UserAgent: {user_agent}, Info: {ip_info}"
+    print(context_data)    
+    logging.INFO(context_data)
+    return render_template('index.html', ID=str(id), IP=ip)
 
 @app.route('/<id>')
 def tracking_pixel_id(id):
@@ -52,21 +56,6 @@ def tracking_pixel_id(id):
     ip = get_client_ip()
     ip_info = fetch_ip_info(ip)
 
-    # log the hit
-    user_log = {
-        "id": id,
-        "ip": ip,
-        "user_agent": user_agent,
-        "timestamp": timestamp
-    }
-    user_log.update(ip_info)
-    try:
-        log_file = parent_directory / 'track_log.txt'
-        with open(log_file, 'a') as f:
-            f.write(ujson.dumps(user_log) + '\n')
-    except Exception as e:
-        app.logger.error("Failed to write log: %s", e)
-
     context = {
         "ID": id,
         "IP": ip,
@@ -74,9 +63,12 @@ def tracking_pixel_id(id):
         "UserAgent": user_agent,
         "Info": ip_info
     }
-    print(f"ID: {str(id)}, IP: {ip}, Timestamp: {timestamp}, UserAgent: {user_agent}, Info: {ip_info}")
-    return render_template('index.html', ID=id, IP=ip)
 
+    context_data = f"ID: {str(id)}, IP: {ip}, Timestamp: {timestamp}, UserAgent: {user_agent}, Info: {ip_info}"
+
+    print(context_data)
+    logging.INFO(context_data)
+    return render_template('index.html', ID=str(id), IP=ip)
 
 
 if __name__ == '__main__':
