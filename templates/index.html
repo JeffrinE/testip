@@ -18,17 +18,6 @@
         <p>Tracking ID: <strong>{{ ID }}</strong></p>
     {% endif %}
     <p>Your IP address: <strong>{{ IP }}</strong></p>
-    <p>Timestamp: {{ Timestamp }}</p>
-    <p>User-Agent: {{ UserAgent }}</p>
-
-    {% if Info %}
-    <h3>IP Info (from ipinfo.io)</h3>
-    <ul>
-        {% for k, v in Info.items() %}
-            <li><strong>{{ k }}:</strong> {{ v }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
 
     <p>This is to convey you not to visit unknown websites.</p>
 </body>

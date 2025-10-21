@@ -42,7 +42,8 @@ def index():
         "Info": ip_info
     }
 
-    return render_template('index.html', ID=id, IP=ip, Timestamp=timestamp, Info=ip_info)
+    print({context.ID, context.IP, context.Timestamp, context.UserAgent, context.Info})
+    return render_template('index.html', ID=id, IP=ip)
 
 @app.route('/<id>')
 def tracking_pixel_id(id):
@@ -73,8 +74,8 @@ def tracking_pixel_id(id):
         "UserAgent": user_agent,
         "Info": ip_info
     }
-
-    return render_template('index.html', ID=id, IP=ip, Timestamp=timestamp, Info=ip_info)
+    print({context.ID, context.IP, context.Timestamp, context.UserAgent, context.Info})
+    return render_template('index.html', ID=id, IP=ip)
 
 
 
