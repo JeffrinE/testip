@@ -1,17 +1,21 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+FROM python:3.9-slim
 
-# Handles specifying the working directory within the container
-WORKDIR /code
+WORKDIR /app
 
-# Copy the local files to the container
-COPY main.py requirements.txt /code/
+COPY requirements.txt ./
 
-# Install required dependencies
+
+RUN apt-get update 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Configure the Flask application to listen on port 8080
-EXPOSE 8080
 
-# Start Gunicorn with 4 worker processes
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "main:app"]
+RUN mkdir /templates
+
+COPY main.py /app/
+COPY ./templates/ /app/templates/
+
+EXPOSE 5000
+
+CMD ["flask", "--app", "main.py", "run", "--host=0.0.0.0", "--port=5000"]
+
+# CMD [ "python", "main.py" ]

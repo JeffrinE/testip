@@ -1,57 +1,82 @@
-from flask import Flask, request, render_template_string
+# app.py
+from flask import Flask, request, render_template
 import datetime
-import os
-# import logging
+import requests
+from pathlib import Path
+import ujson
 
 app = Flask(__name__)
 
-# # Configure logging
-# def log_to_file(log_path):
-#     logging.basicConfig(
-#         filename=log_path,
-#         level=logging.INFO,
-#         format='%(message)s'
-#     )
+parent_directory = Path.cwd().parent
 
-# HTML template (replace or load from an external file if needed)
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>IP Leak Test</title>
-    <meta property="og:title" content="Website name" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://example.com/" />
-    <meta property="og:description" content="Website description" />
-</head>
-<body>
-    <h1>IP Leak PoC</h1>
-    <p>Timestamp: {{ timestamp }}</p>
-    <p>Your IP: {{ ip }}</p>
-</body>
-</html>
-"""
+# helper to get client IP
+def get_client_ip():
+    xff = request.headers.get('X-Forwarded-For') or request.headers.get('x-forwarded-for')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.remote_addr or 'unknown'
+
+def fetch_ip_info(ip):
+    if not ip or ip == 'unknown':
+        return {}
+    try:
+        resp = requests.get(f"https://ipinfo.io/{ip}/json", timeout=3)
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception:
+        pass
+    return {}
 
 @app.route('/')
-def leak_ip():
-    timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    ip = request.remote_addr
-    request_dump = f"{request.method} {request.path}\nHeaders:\n{dict(request.headers)}\n\n{request.get_data(as_text=True)}"
-    print(request_dump)
-    return render_template_string(HTML_TEMPLATE, timestamp=timestamp, ip=ip)
+def index():
+    user_agent = request.headers.get('User-Agent')
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ip = get_client_ip()
+    ip_info = fetch_ip_info(ip)
+
+    context = {
+        "ID": None,
+        "IP": ip,
+        "Timestamp": timestamp,
+        "UserAgent": user_agent,
+        "Info": ip_info
+    }
+
+    return render_template('index.html', ID=id, IP=ip, Timestamp=timestamp, Info=ip_info)
 
 @app.route('/<id>')
-def leak_ip_id(id):
-    timestamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    ip = request.remote_addr
-    request_dump = f"{request.method} {request.path}\nHeaders:\n{dict(request.headers)}\n\n{request.get_data(as_text=True)}"
-    print(request_dump)
-    return render_template_string(HTML_TEMPLATE, timestamp=timestamp, ip=ip)
+def tracking_pixel_id(id):
+    user_agent = request.headers.get('User-Agent')
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ip = get_client_ip()
+    ip_info = fetch_ip_info(ip)
 
-@app.route('/favicon.ico')
-def favicon():
-    return "", 204
+    # log the hit
+    user_log = {
+        "id": id,
+        "ip": ip,
+        "user_agent": user_agent,
+        "timestamp": timestamp
+    }
+    user_log.update(ip_info)
+    try:
+        log_file = parent_directory / 'track_log.txt'
+        with open(log_file, 'a') as f:
+            f.write(ujson.dumps(user_log) + '\n')
+    except Exception as e:
+        app.logger.error("Failed to write log: %s", e)
+
+    context = {
+        "ID": id,
+        "IP": ip,
+        "Timestamp": timestamp,
+        "UserAgent": user_agent,
+        "Info": ip_info
+    }
+
+    return render_template('index.html', ID=id, IP=ip, Timestamp=timestamp, Info=ip_info)
+
+
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=5000)
